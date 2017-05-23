@@ -62,12 +62,19 @@ public class Piece : MonoBehaviour {
 		get { return clearableComponent; }
 	}
 
+	private Robber robberComponent;
+
+	public Robber RobberComponent {
+	get { return robberComponent; }
+}
+
 	//Awake for null
 	void Awake()
 	{
 		movableComponent = GetComponent<MovablePiece> ();
 		colorComponent = GetComponent<ColorPiece> ();
 		clearableComponent = GetComponent<ClearablePiece> ();
+		robberComponent = GetComponent<Robber>();
 	}
 
 
@@ -121,5 +128,10 @@ public class Piece : MonoBehaviour {
 	public bool IsClearable ()
 	{
 		return clearableComponent != null;
+	}
+
+	public bool IsRobber ()
+	{
+		return robberComponent != null;
 	}
 }

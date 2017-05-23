@@ -13,6 +13,7 @@ public class ClearablePiece : MonoBehaviour {
 
 	protected Piece piece;
 
+
 	void Awake() {
 		piece = GetComponent<Piece> ();
 	}
@@ -42,7 +43,9 @@ public class ClearablePiece : MonoBehaviour {
 			animator.Play (clearAnimation.name);
 
 			yield return new WaitForSeconds (clearAnimation.length);
-
+			if (this.gameObject.tag == "Robbed") {
+				isBeingCleared = true;
+			}
 			Destroy (gameObject);
 		}
 	}

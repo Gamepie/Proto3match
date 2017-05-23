@@ -8,6 +8,7 @@ public class MovablePiece : MonoBehaviour {
 	//Reference to piece script
 	private Piece piece;
 	private IEnumerator moveCoroutine;
+	public bool piecefalling = false;
 
 	//Awake with no null ref
 	void Awake(){
@@ -37,16 +38,18 @@ public class MovablePiece : MonoBehaviour {
 	private IEnumerator MoveCoroutine(int newX, int newY, float time)
 	{
 		piece.X = newX;
-		piece.Y =newY;
+		piece.Y = newY;
 		Vector3 startPos = transform.position;
 		Vector3 endPos = piece.GridRef.GetWorldPosition (newX, newY);
 
 		for (float t = 0; t <= 1* time; t += Time.deltaTime){
 			piece.transform.position = Vector3.Lerp (startPos, endPos, t / time);
+
 			yield return 0;
 
 		}
 		piece.transform.position = endPos;
+		//piecefalling = false;
 	}
 }
 

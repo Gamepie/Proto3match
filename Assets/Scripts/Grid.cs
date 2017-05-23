@@ -19,6 +19,7 @@ public class Grid : MonoBehaviour {
 		ROW_CLEAR,
 		COLUMN_CLEAR,
 		RAINBOW,
+		TREASURE,
 		COUNT,
 	};
 
@@ -39,14 +40,28 @@ public class Grid : MonoBehaviour {
 	//Piece BG
 	public GameObject backgroundPrefab;
 
+	//Robber Prefab
+	public GameObject Robber;
+	//robber reference
+	private GameObject robber;
+
+	private Piece FirstRobber;
+
 	//Array of pieces gameobject
 	private Piece[,] pieces;
 
 	//Fall diagonaly
 	private bool inverse = false;
 
+	private bool piecefalling = true;
+
+
+	//Robberspawned bool
+	private bool robberspawned = false;
+
 	private Piece pressedPiece;
 	private Piece enteredPiece;
+
 
 	// Use this for initialization
 	void Start () {
@@ -80,7 +95,8 @@ public class Grid : MonoBehaviour {
 
 		Destroy (pieces [1, 4].gameObject);
 		SpawnNewPiece (1, 4, PieceType.BUBBLE);
-
+		Destroy (pieces [6, 0].gameObject);
+		SpawnNewPiece (6, 0, PieceType.TREASURE);
 
 
 		StartCoroutine(Fill ());
@@ -88,7 +104,7 @@ public class Grid : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		RobberMove ();
 	}
 
 	public IEnumerator Fill() {
@@ -99,7 +115,18 @@ public class Grid : MonoBehaviour {
 				inverse = !inverse;
 				yield return new WaitForSeconds (fillTime);
 			}
+			if (robberspawned == false) {
+				Debug.Log ("spawned");
+				FirstRobber = pieces [0, 0];
+				FirstRobber.tag = "Robbed";
+				robber = (GameObject)Instantiate (Robber, GetWorldPosition(FirstRobber.X,FirstRobber.Y) ,Quaternion.identity);
+				//Make BG child of new object
+				//robber.transform.parent = transform;
+				robberspawned = true;
+
+			}
 			needsRefill = ClearAllValidMatches ();
+			piecefalling = false;
 		}
 	}
 
@@ -126,6 +153,9 @@ public class Grid : MonoBehaviour {
 					{
 						Destroy (pieceBelow.gameObject);
 						piece.MovableComponent.Move (x, y + 1, fillTime);
+						if (piece.gameObject.tag == "Robbed") {
+							piecefalling = true;
+						}
 						pieces [x, y + 1] = piece;
 						SpawnNewPiece (x, y, PieceType.EMPTY);
 						movedPiece = true;
@@ -585,6 +615,26 @@ public class Grid : MonoBehaviour {
 				if (pieces [x, y].IsColored () && (pieces [x, y].ColorComponent.Color == color
 					|| color == ColorPiece.ColorType.ANY)) {
 					ClearPiece (x, y);
+				}
+			}
+		}
+	}
+
+	public void RobberMove(){
+		if (FirstRobber != null) {
+			robber.transform.position = Vector3.Lerp(robber.transform.position, FirstRobber.transform.position, 0.3f);
+
+		}
+		if (FirstRobber != null && FirstRobber.ClearableComponent.IsBeingCleared == true) {
+			for (int y = FirstRobber.Y; y <=yDim-2; y++) {
+				int x = FirstRobber.X;
+				Piece pieceBelow = pieces [x, y+1];
+				if (pieceBelow != null) {
+					if (pieceBelow.Type != PieceType.EMPTY) {
+						FirstRobber = pieces [x, pieceBelow.Y];
+						FirstRobber.tag = "Robbed";
+						break;
+					}
 				}
 			}
 		}
