@@ -75,14 +75,17 @@ public class Grid : MonoBehaviour {
 	public int bubble_y;
 
 
-
 	private Piece pressedPiece;
 	private Piece enteredPiece;
+
+	public GameObject Restart;
 
 
 	// Use this for initialization
 	void Start () {
+		//Time on
 
+		Time.timeScale = 1;
 		//Instantiate a new dictionnary
 		piecePrefabDict = new Dictionary<PieceType, GameObject> ();
 		//Loop to fill length with gems
@@ -115,7 +118,6 @@ public class Grid : MonoBehaviour {
 		Destroy (pieces [treasure_x, treasure_y].gameObject);
 		SpawnNewPiece (treasure_x, treasure_y, PieceType.TREASURE);
 
-
 		StartCoroutine(Fill ());
 	}
 	
@@ -134,7 +136,7 @@ public class Grid : MonoBehaviour {
 				yield return new WaitForSeconds (fillTime);
 			}
 			if (robberspawned == false) {
-				Debug.Log ("spawned");
+				
 				FirstRobber = pieces [robber_x, robber_y];
 				FirstRobber.tag = "Robbed";
 				robber = (GameObject)Instantiate (Robber, GetWorldPosition(FirstRobber.X,FirstRobber.Y) ,Quaternion.identity);
@@ -641,23 +643,35 @@ public class Grid : MonoBehaviour {
 
 	public void RobberMove(){
 		if (FirstRobber != null) {
-			robber.transform.position = Vector3.Lerp(robber.transform.position, FirstRobber.transform.position, 0.3f);
+			robber.transform.position = Vector3.Lerp (robber.transform.position, FirstRobber.transform.position, 0.3f);
+			if (FirstRobber != null) {
+				if (FirstRobber.Type != PieceType.TREASURE && FirstRobber.ClearableComponent.IsBeingCleared == true) {
+					for (int y = FirstRobber.Y; y <= yDim - 2; y++) {
+						int x = FirstRobber.X;
+						Piece pieceBelow = pieces [x, y + 1];
+						if (pieceBelow != null) {
+							if (pieceBelow.Type != PieceType.EMPTY) {
+								FirstRobber = pieces [x, pieceBelow.Y];
+								FirstRobber.tag = "Robbed";
+								break;
+							} else if (pieceBelow.Type == PieceType.EMPTY) {
+								Debug.Log ("test");
+								FirstRobber = pieces [x, yDim - 1];
+								//FirstRobber.tag = "Robber";
+							}
+						}
 
-		}
-		if (FirstRobber != null && FirstRobber.ClearableComponent.IsBeingCleared == true) {
-			for (int y = FirstRobber.Y; y <=yDim-2; y++) {
-				int x = FirstRobber.X;
-				Piece pieceBelow = pieces [x, y+1];
-				if (pieceBelow != null) {
-					if (pieceBelow.Type != PieceType.EMPTY) {
-						FirstRobber = pieces [x, pieceBelow.Y];
-						FirstRobber.tag = "Robbed";
-						break;
-					}
+					} 
+				} else if (FirstRobber.Type == PieceType.TREASURE) {
+					//Show Gameover
+					Time.timeScale = 0;
+					Restart.SetActive (true);
 				}
-			}
+			} 
 		}
-	}
+		}
+
+
 
 	public void RobberTurn () {
 		if (needsRefill == false) {
@@ -673,14 +687,12 @@ public class Grid : MonoBehaviour {
 			if (YDiff == XDiff) {
 				FirstRobber = pieces [FirstRobber.X + 1, NextPiece.Y];
 			} else if (YDiff > XDiff) {
-				FirstRobber = pieces [FirstRobber.X, NextPiece.Y-1];
-			}
-			else if (XDiff > YDiff) {
-				FirstRobber = pieces [FirstRobber.X+1, NextPiece.Y];
-				
-			}
+				FirstRobber = pieces [FirstRobber.X, NextPiece.Y - 1];
+			} else if (XDiff > YDiff) {
+				FirstRobber = pieces [FirstRobber.X + 1, NextPiece.Y];
 
 
+			}
 		}
 	}
 
