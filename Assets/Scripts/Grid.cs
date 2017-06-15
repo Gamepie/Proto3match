@@ -643,9 +643,9 @@ public class Grid : MonoBehaviour {
 
 	public void RobberMove(){
 		if (FirstRobber != null) {
-			robber.transform.position = Vector3.Lerp (robber.transform.position, FirstRobber.transform.position, 0.3f);
+			robber.transform.position = Vector3.Lerp (robber.transform.position, FirstRobber.transform.position, 5*Time.deltaTime);
 			if (FirstRobber != null) {
-				if (FirstRobber.Type != PieceType.TREASURE && FirstRobber.ClearableComponent.IsBeingCleared == true) {
+				if (FirstRobber.Type != PieceType.TREASURE && FirstRobber.IsClearable() && FirstRobber.ClearableComponent.IsBeingCleared == true) {
 					for (int y = FirstRobber.Y; y <= yDim - 2; y++) {
 						int x = FirstRobber.X;
 						Piece pieceBelow = pieces [x, y + 1];
@@ -663,13 +663,18 @@ public class Grid : MonoBehaviour {
 
 					} 
 				} else if (FirstRobber.Type == PieceType.TREASURE) {
-					//Show Gameover
+					//Show Gameover -> CHANGE IT TO ANOTHER GO SCENE LATER
+
 					Time.timeScale = 0;
 					Restart.SetActive (true);
 				}
 			} 
 		}
+		else if(FirstRobber == null && robberspawned==true) {
+			Vector3 LastPiece = new Vector3 (robber.transform.position.x, -yDim/2);
+			robber.transform.position = Vector3.Lerp (robber.transform.position, LastPiece, 5*Time.deltaTime);
 		}
+	}
 
 
 
