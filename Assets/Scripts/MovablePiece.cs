@@ -8,7 +8,7 @@ public class MovablePiece : MonoBehaviour {
 	//Reference to piece script
 	private Piece piece;
 	private IEnumerator moveCoroutine;
-	public bool piecefalling = false;
+	//public bool piecefalling = false;
 
 	//Awake with no null ref
 	void Awake(){

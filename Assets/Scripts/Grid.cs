@@ -77,14 +77,16 @@ public class Grid : MonoBehaviour {
 
 	private Piece pressedPiece;
 	private Piece enteredPiece;
+	private bool gameover;
 
 	public GameObject Restart;
+
 
 
 	// Use this for initialization
 	void Start () {
 		//Time on
-
+		gameover = false;
 		Time.timeScale = 1;
 		//Instantiate a new dictionnary
 		piecePrefabDict = new Dictionary<PieceType, GameObject> ();
@@ -286,55 +288,57 @@ public class Grid : MonoBehaviour {
 
 	public void SwapPieces(Piece piece1, Piece piece2)
 	{
-		if (piece1.IsMovable () && piece2.IsMovable ()) {
-			pieces [piece1.X, piece1.Y] = piece2;
-			pieces [piece2.X, piece2.Y] = piece1;
+		if (!gameover) {
+			if (piece1.IsMovable () && piece2.IsMovable ()) {
+				pieces [piece1.X, piece1.Y] = piece2;
+				pieces [piece2.X, piece2.Y] = piece1;
 
-			if (GetMatch (piece1, piece2.X, piece2.Y) != null || GetMatch (piece2, piece1.X, piece1.Y) != null
-				|| piece1.Type == PieceType.RAINBOW || piece2.Type == PieceType.RAINBOW) {
+				if (GetMatch (piece1, piece2.X, piece2.Y) != null || GetMatch (piece2, piece1.X, piece1.Y) != null
+				   || piece1.Type == PieceType.RAINBOW || piece2.Type == PieceType.RAINBOW) {
 
-				int piece1X = piece1.X;
-				int piece1Y = piece1.Y;
+					int piece1X = piece1.X;
+					int piece1Y = piece1.Y;
 
-				piece1.MovableComponent.Move (piece2.X, piece2.Y, fillTime);
-				piece2.MovableComponent.Move (piece1X, piece1Y, fillTime);
+					piece1.MovableComponent.Move (piece2.X, piece2.Y, fillTime);
+					piece2.MovableComponent.Move (piece1X, piece1Y, fillTime);
 
-				if (piece1.Type == PieceType.RAINBOW && piece1.IsClearable () && piece2.IsColored ()) {
-					ClearColorPiece clearColor = piece1.GetComponent<ClearColorPiece> ();
+					if (piece1.Type == PieceType.RAINBOW && piece1.IsClearable () && piece2.IsColored ()) {
+						ClearColorPiece clearColor = piece1.GetComponent<ClearColorPiece> ();
 
-					if (clearColor) {
-						clearColor.Color = piece2.ColorComponent.Color;
+						if (clearColor) {
+							clearColor.Color = piece2.ColorComponent.Color;
+						}
+
+						ClearPiece (piece1.X, piece1.Y);
 					}
 
-					ClearPiece (piece1.X, piece1.Y);
-				}
+					if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable () && piece1.IsColored ()) {
+						ClearColorPiece clearColor = piece2.GetComponent<ClearColorPiece> ();
 
-				if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable () && piece1.IsColored ()) {
-					ClearColorPiece clearColor = piece2.GetComponent<ClearColorPiece> ();
+						if (clearColor) {
+							clearColor.Color = piece1.ColorComponent.Color;
+						}
 
-					if (clearColor) {
-						clearColor.Color = piece1.ColorComponent.Color;
+						ClearPiece (piece2.X, piece2.Y);
+					}
+					ClearAllValidMatches ();
+
+					if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR) {
+						ClearPiece (piece1.X, piece1.Y);
 					}
 
-					ClearPiece (piece2.X, piece2.Y);
+					if (piece2.Type == PieceType.ROW_CLEAR || piece2.Type == PieceType.COLUMN_CLEAR) {
+						ClearPiece (piece2.X, piece2.Y);
+					}
+
+					pressedPiece = null;
+					enteredPiece = null;
+
+					StartCoroutine (Fill ());
+				} else {
+					pieces [piece1.X, piece1.Y] = piece1;
+					pieces [piece2.X, piece2.Y] = piece2;
 				}
-				ClearAllValidMatches ();
-
-				if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR) {
-					ClearPiece (piece1.X, piece1.Y);
-				}
-
-				if (piece2.Type == PieceType.ROW_CLEAR || piece2.Type == PieceType.COLUMN_CLEAR) {
-					ClearPiece (piece2.X, piece2.Y);
-				}
-
-				pressedPiece = null;
-				enteredPiece = null;
-
-				StartCoroutine (Fill ());
-			} else {
-				pieces [piece1.X, piece1.Y] = piece1;
-				pieces [piece2.X, piece2.Y] = piece2;
 			}
 		}
 	}
@@ -643,9 +647,18 @@ public class Grid : MonoBehaviour {
 
 	public void RobberMove(){
 		if (FirstRobber != null) {
-			robber.transform.position = Vector3.Lerp (robber.transform.position, FirstRobber.transform.position, 5*Time.deltaTime);
+			//robber.transform.position = Vector3.Lerp (robber.transform.position, FirstRobber.transform.position, 5*Time.deltaTime);
+
 			if (FirstRobber != null) {
-				if (FirstRobber.Type != PieceType.TREASURE && FirstRobber.IsClearable() && FirstRobber.ClearableComponent.IsBeingCleared == true) {
+				if (FirstRobber.Type == PieceType.TREASURE) {
+					//Show Gameover
+					robber.transform.position = FirstRobber.transform.position;
+					gameover = true;
+
+					Time.timeScale = 0;
+					Restart.SetActive (true);
+
+				} else if (FirstRobber.Type != PieceType.TREASURE && FirstRobber.IsClearable () && FirstRobber.ClearableComponent.IsBeingCleared == true) {
 					for (int y = FirstRobber.Y; y <= yDim - 2; y++) {
 						int x = FirstRobber.X;
 						Piece pieceBelow = pieces [x, y + 1];
@@ -662,14 +675,12 @@ public class Grid : MonoBehaviour {
 						}
 
 					} 
-				} else if (FirstRobber.Type == PieceType.TREASURE) {
-					//Show Gameover -> CHANGE IT TO ANOTHER GO SCENE LATER
-
-					Time.timeScale = 0;
-					Restart.SetActive (true);
+				} else {
+					robber.transform.position = Vector3.Lerp (robber.transform.position, FirstRobber.transform.position, 5*Time.deltaTime);
 				}
 			} 
 		}
+
 		else if(FirstRobber == null && robberspawned==true) {
 			Vector3 LastPiece = new Vector3 (robber.transform.position.x, -yDim/2);
 			robber.transform.position = Vector3.Lerp (robber.transform.position, LastPiece, 5*Time.deltaTime);
@@ -700,5 +711,7 @@ public class Grid : MonoBehaviour {
 			}
 		}
 	}
+
+
 
 }
