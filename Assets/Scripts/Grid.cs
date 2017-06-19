@@ -20,6 +20,7 @@ public class Grid : MonoBehaviour {
 		COLUMN_CLEAR,
 		RAINBOW,
 		TREASURE,
+		KEY,
 		COUNT,
 	};
 
@@ -47,6 +48,12 @@ public class Grid : MonoBehaviour {
 
 	private Piece FirstRobber;
 
+	//Key Prefab
+	public GameObject Key;
+	//Key reference
+	private GameObject key;
+
+
 	//Array of pieces gameobject
 	private Piece[,] pieces;
 
@@ -55,12 +62,18 @@ public class Grid : MonoBehaviour {
 
 	private bool piecefalling = true;
 
+	//KeySpawned bool
+	private bool keyspawned = false;
 
 	//Robberspawned bool
 	private bool robberspawned = false;
 
 	//bool for coroutine to fill grid
 	private bool needsRefill = true;
+
+	//key spawn variables
+	public int key_x;
+	public int key_y;
 
 	//robber spawn variables
 	public int robber_x;
@@ -150,6 +163,11 @@ public class Grid : MonoBehaviour {
 			needsRefill = ClearAllValidMatches ();
 			piecefalling = false;
 			RobberTurn ();
+			if (keyspawned == false) {
+				key = (GameObject)Instantiate (Key, GetWorldPosition (key_x, key_y), Quaternion.identity);
+				keyspawned = true;
+			}
+		
 		}
 	}
 
@@ -310,6 +328,7 @@ public class Grid : MonoBehaviour {
 						}
 
 						ClearPiece (piece1.X, piece1.Y);
+
 					}
 
 					if (piece2.Type == PieceType.RAINBOW && piece2.IsClearable () && piece1.IsColored ()) {
@@ -588,6 +607,11 @@ public class Grid : MonoBehaviour {
 	{
 		if (pieces [x, y].IsClearable () && !pieces [x, y].ClearableComponent.IsBeingCleared) {
 			pieces [x, y].ClearableComponent.Clear ();
+//			if (keyspawned == true) {
+//				if (pieces [x, y].X == key.transform.position.x && pieces [x, y].Y == key.transform.position.y) {
+//					Debug.Log ("works");
+//				}
+//			}
 			SpawnNewPiece (x, y, PieceType.EMPTY);
 
 			ClearObstacles (x, y);
@@ -668,7 +692,7 @@ public class Grid : MonoBehaviour {
 								FirstRobber.tag = "Robbed";
 								break;
 							} else if (pieceBelow.Type == PieceType.EMPTY) {
-								Debug.Log ("test");
+								
 								FirstRobber = pieces [x, yDim - 1];
 								//FirstRobber.tag = "Robber";
 							}
