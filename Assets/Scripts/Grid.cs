@@ -96,6 +96,8 @@ public class Grid : MonoBehaviour {
 
 
 
+
+
 	// Use this for initialization
 	void Start () {
 		//Time on
@@ -340,6 +342,7 @@ public class Grid : MonoBehaviour {
 
 						ClearPiece (piece2.X, piece2.Y);
 					}
+					//IsKey in Match?
 					ClearAllValidMatches ();
 
 					if (piece1.Type == PieceType.ROW_CLEAR || piece1.Type == PieceType.COLUMN_CLEAR) {
@@ -462,6 +465,7 @@ public class Grid : MonoBehaviour {
 			if (matchingPieces.Count >= 3) {
 				return matchingPieces;
 			}
+
 
 			// Didn't find anything going horizontally first,
 			// so now check vertically
@@ -594,6 +598,7 @@ public class Grid : MonoBehaviour {
 								newPiece.ColorComponent.SetColor (ColorPiece.ColorType.ANY);
 							} 
 						}
+							
 					}
 				}
 			}
@@ -606,12 +611,16 @@ public class Grid : MonoBehaviour {
 	public bool ClearPiece(int x, int y)
 	{
 		if (pieces [x, y].IsClearable () && !pieces [x, y].ClearableComponent.IsBeingCleared) {
+			if (keyspawned == true) {
+				if (pieces [x, y].X == key_x && pieces [x, y].Y == key_y) {
+					Debug.Log ("KeyisFound");
+					Vector3 zero = new Vector3 (-3, 5);
+					key.transform.position = zero;
+					Destroy (pieces [0, 0].gameObject);
+				}
+			}
 			pieces [x, y].ClearableComponent.Clear ();
-//			if (keyspawned == true) {
-//				if (pieces [x, y].X == key.transform.position.x && pieces [x, y].Y == key.transform.position.y) {
-//					Debug.Log ("works");
-//				}
-//			}
+
 			SpawnNewPiece (x, y, PieceType.EMPTY);
 
 			ClearObstacles (x, y);
@@ -621,6 +630,8 @@ public class Grid : MonoBehaviour {
 
 		return false;
 	}
+
+
 
 	public void ClearObstacles(int x, int y)
 	{
@@ -735,7 +746,5 @@ public class Grid : MonoBehaviour {
 			}
 		}
 	}
-
-
-
+			
 }
