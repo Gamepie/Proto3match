@@ -75,6 +75,10 @@ public class Grid : MonoBehaviour {
 	public int key_x;
 	public int key_y;
 
+	//Is Key found?
+	private bool KeyFound = false;
+	private bool keymoved = false;
+
 	//robber spawn variables
 	public int robber_x;
 	public int robber_y;
@@ -141,6 +145,7 @@ public class Grid : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		RobberMove ();
+		KeyObtained ();
 	
 	}
 
@@ -261,18 +266,30 @@ public class Grid : MonoBehaviour {
 		for (int x = 0; x < xDim; x++)
 		{
 			Piece pieceBelow = pieces [x, 0];
+			Piece loadingpiece = pieces [x, 0];
 
 			if (pieceBelow.Type == PieceType.EMPTY)
 			{
 				Destroy (pieceBelow.gameObject);
-				GameObject newPiece = (GameObject)Instantiate(piecePrefabDict[PieceType.NORMAL], GetWorldPosition(x, -1), Quaternion.identity);
-				newPiece.transform.parent = transform;
+				if (KeyFound == true & keymoved == false) {
+					GameObject newPiece = (GameObject)Instantiate (piecePrefabDict [PieceType.KEY], GetWorldPosition (key_x, -1), Quaternion.identity);
+					newPiece.transform.parent = transform;
 
-				pieces [x, 0] = newPiece.GetComponent<Piece> ();
-				pieces [x, 0].Init (x, -1, this, PieceType.NORMAL);
-				pieces [x, 0].MovableComponent.Move (x, 0, fillTime);
-				pieces [x, 0].ColorComponent.SetColor ((ColorPiece.ColorType)Random.Range (0, pieces [x, 0].ColorComponent.NumColors));
-				movedPiece = true;
+					pieces [key_x, 0] = newPiece.GetComponent<Piece> ();
+					pieces [key_x, 0].Init (key_x, -1, this, PieceType.KEY);
+					pieces [key_x, 0].MovableComponent.Move (key_x, 0, fillTime);
+
+					keymoved = true;
+				} else {
+					GameObject newPiece = (GameObject)Instantiate (piecePrefabDict [PieceType.NORMAL], GetWorldPosition (x, -1), Quaternion.identity);
+					newPiece.transform.parent = transform;
+
+					pieces [x, 0] = newPiece.GetComponent<Piece> ();
+					pieces [x, 0].Init (x, -1, this, PieceType.NORMAL);
+					pieces [x, 0].MovableComponent.Move (x, 0, fillTime);
+					pieces [x, 0].ColorComponent.SetColor ((ColorPiece.ColorType)Random.Range (0, pieces [x, 0].ColorComponent.NumColors));
+					movedPiece = true;
+				}
 			}
 		}
 
@@ -611,12 +628,12 @@ public class Grid : MonoBehaviour {
 	public bool ClearPiece(int x, int y)
 	{
 		if (pieces [x, y].IsClearable () && !pieces [x, y].ClearableComponent.IsBeingCleared) {
-			if (keyspawned == true) {
+			if (keyspawned == true & KeyFound == false) {
 				if (pieces [x, y].X == key_x && pieces [x, y].Y == key_y) {
 					Debug.Log ("KeyisFound");
-					Vector3 zero = new Vector3 (-3, 5);
-					key.transform.position = zero;
-					Destroy (pieces [0, 0].gameObject);
+					Destroy (key);
+					KeyFound = true;
+
 				}
 			}
 			pieces [x, y].ClearableComponent.Clear ();
@@ -678,6 +695,21 @@ public class Grid : MonoBehaviour {
 				}
 			}
 		}
+	}
+
+	public void KeyObtained() {
+		for (int x = 0; x < xDim; x++) {
+			for (int y = yDim - 1; y < yDim; y++) {
+				if (pieces [x, y].Type == PieceType.KEY) {
+					
+					gameover = true;
+					Time.timeScale = 0;
+					Restart.SetActive (true);
+					break;
+				}
+			}
+		}
+				
 	}
 
 	public void RobberMove(){
