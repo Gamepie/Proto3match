@@ -53,6 +53,11 @@ public class Grid : MonoBehaviour {
 	//Key reference
 	private GameObject key;
 
+	private GameObject keyT;
+
+	//private SpriteRenderer keySprite;
+	private KeyPiece Fkey;
+
 
 	//Array of pieces gameobject
 	private Piece[,] pieces;
@@ -76,7 +81,7 @@ public class Grid : MonoBehaviour {
 	public int key_y;
 
 	//Is Key found?
-	private bool KeyFound = false;
+	public static bool KeyFound = false;
 	private bool keymoved = false;
 
 	//robber spawn variables
@@ -98,8 +103,7 @@ public class Grid : MonoBehaviour {
 
 	public GameObject Restart;
 
-
-
+	public List<GameObject> keys;
 
 
 	// Use this for initialization
@@ -138,7 +142,6 @@ public class Grid : MonoBehaviour {
 		SpawnNewPiece (bubble_x, bubble_y, PieceType.BUBBLE);
 		Destroy (pieces [treasure_x, treasure_y].gameObject);
 		SpawnNewPiece (treasure_x, treasure_y, PieceType.TREASURE);
-
 		StartCoroutine(Fill ());
 	}
 	
@@ -150,6 +153,12 @@ public class Grid : MonoBehaviour {
 	}
 
 	public IEnumerator Fill() {
+		if (Fkey != null) {
+			while (Fkey.keyanimover == false) {
+				yield return new WaitForSeconds (Fkey.keyAnimation.length);
+			}
+		}
+
 		needsRefill = true;
 		while (needsRefill) {
 			yield return new WaitForSeconds (fillTime);
@@ -157,6 +166,7 @@ public class Grid : MonoBehaviour {
 				inverse = !inverse;
 				yield return new WaitForSeconds (fillTime);
 			}
+
 			if (robberspawned == false) {
 				
 				FirstRobber = pieces [robber_x, robber_y];
@@ -171,11 +181,15 @@ public class Grid : MonoBehaviour {
 			piecefalling = false;
 			RobberTurn ();
 			if (keyspawned == false) {
-				key = (GameObject)Instantiate (Key, GetWorldPosition (key_x, key_y), Quaternion.identity);
+				keys.Add (key = (GameObject)Instantiate (Key, GetWorldPosition (key_x, key_y), Quaternion.identity));
+				SpriteRenderer keySprite = key.GetComponentInChildren<SpriteRenderer> ();
+				keySprite.enabled = !keySprite.enabled;
+				}
+
 				keyspawned = true;
-			}
-		
+					
 		}
+
 	}
 
 	public bool FillStep() {
@@ -271,16 +285,20 @@ public class Grid : MonoBehaviour {
 			if (pieceBelow.Type == PieceType.EMPTY)
 			{
 				Destroy (pieceBelow.gameObject);
-				if (KeyFound == true & keymoved == false) {
-					GameObject newPiece = (GameObject)Instantiate (piecePrefabDict [PieceType.KEY], GetWorldPosition (key_x, -1), Quaternion.identity);
-					newPiece.transform.parent = transform;
+				WaitKey ();
+					if (KeyFound == true & keymoved == false) {
 
-					pieces [key_x, 0] = newPiece.GetComponent<Piece> ();
-					pieces [key_x, 0].Init (key_x, -1, this, PieceType.KEY);
-					pieces [key_x, 0].MovableComponent.Move (key_x, 0, fillTime);
+						GameObject newPiece = (GameObject)Instantiate (piecePrefabDict [PieceType.KEY], GetWorldPosition (key_x, -1), Quaternion.identity);
+						newPiece.transform.parent = transform;
 
-					keymoved = true;
-				} else {
+						pieces [key_x, 0] = newPiece.GetComponent<Piece> ();
+						pieces [key_x, 0].Init (key_x, -1, this, PieceType.KEY);
+						pieces [key_x, 0].MovableComponent.Move (key_x, 0, fillTime);
+
+						keymoved = true;
+					
+
+				}else {
 					GameObject newPiece = (GameObject)Instantiate (piecePrefabDict [PieceType.NORMAL], GetWorldPosition (x, -1), Quaternion.identity);
 					newPiece.transform.parent = transform;
 
@@ -625,14 +643,14 @@ public class Grid : MonoBehaviour {
 		return needsRefill;
 	}
 
+
 	public bool ClearPiece(int x, int y)
 	{
 		if (pieces [x, y].IsClearable () && !pieces [x, y].ClearableComponent.IsBeingCleared) {
 			if (keyspawned == true & KeyFound == false) {
 				if (pieces [x, y].X == key_x && pieces [x, y].Y == key_y) {
-					Debug.Log ("KeyisFound");
-					Destroy (key);
-					KeyFound = true;
+					animateKey (x, y);
+
 
 				}
 			}
@@ -647,6 +665,26 @@ public class Grid : MonoBehaviour {
 
 		return false;
 	}
+
+	public void animateKey(int x, int y)
+	{
+		foreach (GameObject key in keys) {
+			if (pieces [x, y].X == key_x && pieces [x, y].Y == key_y) {
+				Fkey = key.GetComponent<KeyPiece> ();
+				SpriteRenderer KEYSprite = key.GetComponentInChildren<SpriteRenderer> ();
+				KEYSprite.enabled = !KEYSprite.enabled;
+				Fkey.keyFound ();
+
+				KeyFound = true;
+
+			}
+		}
+		keys.Remove (key);
+	
+
+
+	}
+
 
 
 
@@ -777,6 +815,11 @@ public class Grid : MonoBehaviour {
 
 			}
 		}
+	}
+	IEnumerator WaitKey(){
+
+		yield return new WaitUntil (() => Fkey.keyanimover == true);
+
 	}
 			
 }

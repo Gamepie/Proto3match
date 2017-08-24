@@ -62,6 +62,14 @@ public class Piece : MonoBehaviour {
 		get { return clearableComponent; }
 	}
 
+	private KeyPiece keyComponent;
+
+	public KeyPiece KeyComponent {
+		get { return keyComponent; }
+	}
+
+
+
 	private Robber robberComponent;
 
 	public Robber RobberComponent {
@@ -75,6 +83,7 @@ public class Piece : MonoBehaviour {
 		colorComponent = GetComponent<ColorPiece> ();
 		clearableComponent = GetComponent<ClearablePiece> ();
 		robberComponent = GetComponent<Robber>();
+		keyComponent = GetComponent<KeyPiece> ();
 	}
 
 
@@ -128,6 +137,11 @@ public class Piece : MonoBehaviour {
 	public bool IsClearable ()
 	{
 		return clearableComponent != null;
+	}
+
+	public bool IsFoundable ()
+	{
+		return keyComponent != null;
 	}
 
 	public bool IsRobber ()
